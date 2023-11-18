@@ -2,6 +2,12 @@
 name = "structured_persistent_logger"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/klaatu01/structured_persistent_logger"
+description = "A structured 'log' logger that allows for persistent fields"
+documentation = "https://docs.rs/klaatu01/0.1.0/structured_persistent_logger/"
+readme = "README.md"
+license = "MIT"
+keywords = ["log", "structured", "persistent", "logger"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
