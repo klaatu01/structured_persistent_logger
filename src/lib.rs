@@ -1,16 +1,12 @@
 use chrono::Utc;
 use lazy_static::lazy_static;
-use log::Record;
+use log::{LevelFilter, Record};
 use serde_json::{Map, Value};
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap, env, sync::RwLock};
 
 lazy_static! {
     static ref PERSISTENT_LOGS: RwLock<HashMap<String, serde_json::Value>> =
         RwLock::new(HashMap::new());
-}
-
-pub struct StructuredPersistentLogger {
-    pub persistent_logs: RwLock<HashMap<String, serde_json::Value>>,
 }
 
 pub fn add_persistent_log(key: &str, value: Value) {
@@ -41,28 +37,33 @@ macro_rules! add_persistent_logs {
     }};
 }
 
+pub struct StructuredPersistentLogger {}
+
 impl StructuredPersistentLogger {
     pub fn new() -> Self {
-        StructuredPersistentLogger {
-            persistent_logs: RwLock::new(HashMap::new()),
-        }
-    }
-
-    pub fn new_with(persistent_logs: HashMap<String, serde_json::Value>) -> Self {
-        StructuredPersistentLogger {
-            persistent_logs: RwLock::new(persistent_logs),
-        }
+        StructuredPersistentLogger {}
     }
 
     pub fn init() {
-        log::set_max_level(log::LevelFilter::Info);
+        let log_level = match env::var("RUST_LOG") {
+            Ok(value) => match value.to_lowercase().as_str() {
+                "error" => LevelFilter::Error,
+                "warn" => LevelFilter::Warn,
+                "info" => LevelFilter::Info,
+                "debug" => LevelFilter::Debug,
+                "trace" => LevelFilter::Trace,
+                _ => LevelFilter::Info,
+            },
+            Err(_) => LevelFilter::Off,
+        };
+        log::set_max_level(log_level);
         log::set_boxed_logger(Box::new(StructuredPersistentLogger::new())).unwrap();
     }
 }
 
 impl log::Log for StructuredPersistentLogger {
-    fn enabled(&self, _: &log::Metadata) -> bool {
-        true
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.level() <= log::max_level()
     }
 
     fn log(&self, record: &Record) {
